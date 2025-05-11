@@ -6,9 +6,10 @@ import pytesseract              # Tesseract OCR: 이미지에서 텍스트 추�
 import re                       # 정규표현식: OCR 문자열에서 특정 라벨 패턴 추출
 import random                   # 무작위 색상 생성 (label별 색상 매핑)
 import csv                      # CSV 파일 저장용 (라벨-색상 대응표 저장)
+#아 여기 위에 라이브러리 모두 상업적 사용 가능
 
 # === 설정 ===
-label_mode = 1
+label_mode = 1  # 0: 숫자, 1: XF-X, X-X, TS-X, 2: H1-H9, 3: 문자형식
 save_label_color_map = True
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
@@ -63,7 +64,7 @@ for cnt in contours_all:
         gray_val = img_gray[y, x]
         cv2.circle(avg_filled, (x, y), 1, int(gray_val), -1)  # 1픽셀 회색 점 찍기
 
-# === MedianBlur 및 양자화
+# === 양자화
 quantized = (avg_filled // 32) * 32
 
 # === KMeans 분할
@@ -87,6 +88,7 @@ if save_label_color_map:
         for label, color in zip(unique_labels, colors):
             writer.writerow([label] + list(color))
 
+# === 색상 블러 처리
 b, g, r = cv2.split(color_image)
 b_blur = cv2.medianBlur(b, 3)
 g_blur = cv2.medianBlur(g, 3)
