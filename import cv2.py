@@ -18,6 +18,12 @@ img_path = r"C:\Users\LG\Desktop\학교\SW프젝\KakaoTalk_20250508_134842636.jp
 img_pil = Image.open(img_path).convert("L")
 img_gray = np.array(img_pil)
 
+# CV2로도 이미지를 불러와서 단순한 이미 해상도 체크. 너무 낮을 경우 받지 않음.
+temp_img = cv2.imread(img_path)
+height, width = temp_img.shape()
+if (height < 2160 or width < 3840) :
+    print('image is too small')
+
 ocr_text = pytesseract.image_to_string(img_gray, config='--psm 6')
 
 print("===== OCR 추출 결과 전체 보기 =====") #해보니 지금 안나온 내용이 꽤 있음.
