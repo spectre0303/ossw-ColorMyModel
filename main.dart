@@ -5,6 +5,9 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io'; // File 클래스를 사용하기 위해 임포트
+import 'package:http/http.dart' as http;
+import 'dart:typed_data';
+
 
 void main() {
   runApp(const MyApp());
@@ -34,22 +37,53 @@ class MyHomePage extends StatelessWidget {
   Future<void> _pickImage(BuildContext context) async {
   final ImagePicker picker = ImagePicker();
 
+  
+
   if (kIsWeb) {
       // 웹은 갤러리만 지원
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         print("웹에서 선택한 사진 경로: ${image.path}");
-      }
+        Uint8List responseBytes = Uint8List(0);
+        try {
+      final bytes = await image.readAsBytes();
 
-      if (image != null) {
-      // 이미지 선택 후, 새로운 화면으로 넘어가기
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ImagePreviewScreen(imagePath: image.path),
-        ),
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://192.168.219.101:5000/upload'),
       );
-    }
+      request.files.add(http.MultipartFile.fromBytes(
+        'image',
+        bytes,
+        filename: image.name,
+      ));
+
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        responseBytes = await response.stream.toBytes();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ImagePreviewScreen(imageBytes: responseBytes),
+          ),
+        );
+      } 
+      else {
+        print("서버 오류: ${response.statusCode}");
+      }
+        
+      }
+      catch (e) {
+      print("에러 발생: $e");
+      Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const MyHomePage(title: 'ColorMyModel')),
+      (Route<dynamic> route) => false,
+      );
+      }
+      finally{print("서버 통신 완료");}
+
+      
       return;
     }
 
@@ -92,7 +126,7 @@ class MyHomePage extends StatelessWidget {
     },
   );
 }
-
+  }
   
   @override
   Widget build(BuildContext context) {
@@ -145,18 +179,20 @@ class MyHomePage extends StatelessWidget {
 }
 
 
+
 class ImagePreviewScreen extends StatelessWidget {
-  final String imagePath;
-  const ImagePreviewScreen({super.key, required this.imagePath});
+  final Uint8List imageBytes;
+
+  const ImagePreviewScreen({Key? key, required this.imageBytes}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Image Preview")),
+      appBar: AppBar(
+        title: const Text("Image Preview"),
+      ),
       body: Center(
-        child: kIsWeb
-          ?Image.network(imagePath) // 웹에서 선택한 이미지를 화면에 표시
-          :Image.file(File(imagePath))// 선택한 이미지를 화면에 표시
+        child: Image.memory(imageBytes),
       ),
     );
   }
