@@ -2,16 +2,18 @@
 from flask import Flask, request, send_file
 import io
 from PIL import Image
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route('/upload', methods=['POST'])
 def upload_image():
     file = request.files['image']
 
     # 로그 출력: 요청자 IP, 파일명 등
-    print(f"✅ 요청 받음 - 클라이언트 IP: {request.remote_addr}")
-    print(f"📷 업로드된 파일 이름: {file.filename}")
+    print(f"요청 받음 - 클라이언트 IP: {request.remote_addr}")
+    print(f"업로드된 파일 이름: {file.filename}")
 
     try:
         img = Image.open(file.stream)
