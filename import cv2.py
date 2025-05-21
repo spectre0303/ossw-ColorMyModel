@@ -9,20 +9,25 @@ import csv                      # CSV 파일 저장용 (라벨-색상 대응표 
 #아 여기 위에 라이브러리 모두 상업적 사용 가능
 
 # === 설정 ===
-label_mode = 2  # 0: 숫자, 1: XF-X, X-X, TS-X, 2: H1-H9, 3: 문자형식
+label_mode = 1  # 0: 숫자, 1: XF-X, X-X, TS-X, 2: H1-H9, 3: 문자형식
 save_label_color_map = True
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 # === 이미지 불러오기 ===
-img_path = r"C:\Users\LG\Desktop\학교\SW프젝\KakaoTalk_20250512_132537336.jpg"
+img_path = r"C:\Users\LG\Desktop\학교\SW프젝\KakaoTalk_20250508_134842636.jpg"
 img_pil = Image.open(img_path).convert("L")
 img_gray = np.array(img_pil)
 
 # 이미지 해상도 체크. 너무 낮을 경우 받지 않음.
 width, height = img_pil.size
-if width < 1000 or height < 1000:
-    print("이미지 해상도가 너무 낮습니다. 최소 1000x1000 픽셀 이상이어야 합니다.")
-    exit()
+if width > height or width == height:
+    if width < 1000 or height < 500:
+        print("이미지 해상도가 너무 낮습니다. 최소 1000X500 픽셀 이상이어야 합니다.")
+        exit()
+else:
+    if width < 500 or height < 1000:
+        print("이미지 해상도가 너무 낮습니다. 최소 500X1000 픽셀 이상이어야 합니다.")
+        exit()
 
 #이미지 크기가 너무 큰경우 리사이즈(최대 1800)
 h, w = img_gray.shape[:2]
@@ -38,7 +43,8 @@ if h > 1800 or w > 1800:
 
     # numpy array를 OpenCV가 인식할 수 있도록 리사이즈
     resized_img = cv2.resize(img_gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
-
+else:
+    resized_img = img_gray
 ocr_text = pytesseract.image_to_string(resized_img, config='--psm 6')
 
 print("===== OCR 추출 결과 전체 보기 =====") #해보니 지금 안나온 내용이 꽤 있음.
@@ -66,7 +72,7 @@ else:
 unique_labels = sorted(set(found_labels), key=lambda x: str(x).lower())
 num_regions = len(unique_labels)
 if num_regions == 0:
-    num_regions = 2
+    num_regions = 7
     unique_labels = [f"Region_{i+1}" for i in range(num_regions)]
 
 # === 윤곽선 추출 및 원본 회색값으로 선 채색
@@ -89,9 +95,10 @@ quantized = (avg_filled // 32) * 32
 
 ##===============================외곽 윤곽선 과정
 # === 윤곽선 추출 및 이어주기
-lap_blur = cv2.GaussianBlur(resized_img, (3, 3), 0)
+lap_blur = cv2.GaussianBlur(quantized, (3, 3), 0)
 laplacian = cv2.Laplacian(lap_blur, cv2.CV_8U, ksize=3)
 _, edge_mask = cv2.threshold(laplacian, 25, 255, cv2.THRESH_BINARY)
+kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
 edge_mask_closed = cv2.morphologyEx(edge_mask, cv2.MORPH_CLOSE, kernel)
 
 # === 60% 이상인 외곽 윤곽선이 없을 때까지 반복적으로 제거
@@ -127,12 +134,12 @@ external_mask = cv2.morphologyEx(external_mask, cv2.MORPH_CLOSE, kernel)
 
 # === KMeans 분할
 # === 외곽 내부 영역만 추출 (원본 grayscale 기준)
-masked_pixels = resized_img[external_mask == 255]
-h, w = resized_img.shape
+masked_pixels = quantized[external_mask == 255]
+h, w = quantized.shape
 Z = masked_pixels.reshape((-1, 1)).astype(np.float32)
 kmeans = KMeans(n_clusters=num_regions, n_init=10)
 kmeans.fit(Z)
-labels_full = np.full(resized_img.shape, -1, dtype=np.int32)
+labels_full = np.full(quantized.shape, -1, dtype=np.int32)
 
 # 외곽 내부에만 결과 매핑
 labels_full[external_mask == 255] = kmeans.labels_
@@ -159,6 +166,6 @@ r_blur = cv2.medianBlur(r, 3)
 blurred_color_image = cv2.merge([b_blur, g_blur, r_blur])
 
 # === 결과 저장
-
+cv2.imwrite("outer.png", edge_mask_closed)
 cv2.imwrite("before_color.png", quantized)
 cv2.imwrite("1result_color_segmented.png", blurred_color_image )
