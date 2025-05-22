@@ -1,0 +1,35 @@
+코드,색상 이름,RGB 값
+X-1,Black,"(0, 0, 0)"
+X-2,White,"(255, 255, 255)"
+X-3,Royal Blue,"(0, 0, 255)"
+X-4,Blue,"(0, 0, 139)"
+X-5,Green,"(0, 128, 0)"
+X-6,Orange,"(255, 165, 0)"
+X-7,Red,"(255, 0, 0)"
+X-8,Lemon Yellow,"(255, 250, 205)"
+X-9,Brown,"(139, 69, 19)"
+X-10,Gun Metal,"(42, 42, 42)"
+X-11,Chrome Silver,"(192, 192, 192)"
+X-12,Gold Leaf,"(255, 215, 0)"
+X-13,Metallic Blue,"(0, 0, 205)"
+X-14,Sky Blue,"(135, 206, 235)"
+X-15,Light Green,"(144, 238, 144)"
+X-16,Purple,"(128, 0, 128)"
+X-17,Pink,"(255, 192, 203)"
+X-18,Semi Gloss Black,"(33, 33, 33)"
+X-19,Smoke,"(105, 105, 105)"
+X-20,Thinner,-
+X-21,Flat Base,-
+X-22,Clear,-
+X-23,Clear Blue,-
+X-24,Clear Yellow,-
+X-25,Clear Green,-
+X-26,Clear Orange,-
+X-27,Clear Red,-
+X-28,Park Green,"(0, 128, 0)"
+X-29,Semi Gloss Clear,-
+X-30,Clear Yellow,-
+X-31,Titanium Gold,"(255, 215, 0)"
+X-32,Titanium Silver,"(192, 192, 192)"
+X-33,Bronze,"(205, 127, 50)"
+X-34,Metallic Brown,"(153, 62, 5)"

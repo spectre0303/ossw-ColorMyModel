@@ -5,17 +5,18 @@ import pytesseract
 import re
 import csv
 
-# Function to load an image from a file path
+pytesseract.pytesseract.tesseract_cmd = r"C:/Program Files/Tesseract-OCR/tesseract.exe"
+
 def load_image(image_path):
     return cv2.imread(image_path)
 
-# Function to parse text from an image using Tesseract OCR
-def parse_text_from_image(image):
+image_path = "Projects/Test_Img_12MP.jpg"  # Replace with your image path
 
-    # Convert the image to grayscale for better OCR accuracy
+def parse_text_from_image(image):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    # Use Tesseract to extract text
-    extracted_text = pytesseract.image_to_string(gray_image)
+
+    extracted_text = pytesseract.image_to_string(gray_image, config='--psm 6')
+
     return extracted_text
 
 # Function to process extracted text with custom conditions and prefixes
@@ -51,7 +52,7 @@ def process_text(extracted_text, conditions_and_prefixes):
 # Example usage structure
 if __name__ == "__main__":
     # Load the image
-    image_path = "path/to/your/image.jpg"  # Replace with your image path
+    image_path = "Projects\Test_Img_12MP.jpg"  # Replace with your image path
     image = load_image(image_path)
     
     # Parse text from the image

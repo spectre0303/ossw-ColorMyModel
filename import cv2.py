@@ -8,6 +8,7 @@ import random                   # 무작위 색상 생성 (label별 색상 매�
 import csv                      # CSV 파일 저장용 (라벨-색상 대응표 저장)
 #아 여기 위에 라이브러리 모두 상업적 사용 가능
 
+
 # === 설정 ===
 label_mode = 1  # 0: 숫자, 1: XF-X, X-X, TS-X, 2: H1-H9, 3: 문자형식
 save_label_color_map = True
