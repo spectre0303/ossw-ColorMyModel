@@ -9,7 +9,7 @@ import csv                      # CSV 파일 저장용 (라벨-색상 대응표 
 #아 여기 위에 라이브러리 모두 상업적 사용 가능
 
 # === 설정 ===
-label_mode = 1  # 0: 숫자, 1: XF-X, X-X, TS-X, 2: H1-H9, 3: 문자형식
+label_mode = 1   # 0: 숫자, 1: XF-숫자, X-숫자, TS-숫자, 2: H숫자, 3: 문자형식
 save_label_color_map = True
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
