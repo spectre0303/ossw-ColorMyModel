@@ -9,7 +9,7 @@ import csv                      # CSV 파일 저장용 (라벨-색상 대응표 
 #아 여기 위에 라이브러리 모두 상업적 사용 가능
 
 # === 설정 ===
-label_mode = 1   # 0: 숫자, 1: XF-숫자, X-숫자, TS-숫자, 2: H숫자, 3: 문자형식
+label_mode = 1  # 0: 숫자, 1: XF-숫자, X-숫자, TS-숫자, 2: H숫자, 3: 문자형식
 save_label_color_map = True
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
@@ -169,3 +169,193 @@ blurred_color_image = cv2.merge([b_blur, g_blur, r_blur])
 cv2.imwrite("outer.png", edge_mask_closed)
 cv2.imwrite("before_color.png", quantized)
 cv2.imwrite("1result_color_segmented.png", blurred_color_image )
+
+#--------------------------------명암에 따른 영역 분리 끝----------------------------------------------------
+#-------------------------------라벨 + 랜덤 색상 매핑 시작--------------------------------
+
+MIN_LENGTH = 50  # 최소 선 길이
+
+# === 라벨 위치 추출 ===
+label_positions = {} # 라벨 위치를 저장할 딕셔너리
+with open("label_color_mapping.csv", "r", newline="", encoding='utf-8') as f:
+    reader = csv.reader(f)
+    next(reader)
+    labels = [row[0] for row in reader]
+
+data = pytesseract.image_to_data(resized_img, lang='eng', output_type=pytesseract.Output.DICT)
+seen = set() #라벨 위치 첫번째 발견 후 중복 방지
+for i, text in enumerate(data['text']):
+    txt = text.strip()
+    if txt in labels and txt not in seen:
+        x, y = data['left'][i], data['top'][i]
+        w_box, h_box = data['width'][i], data['height'][i]
+        # 라벨 영역 중앙 좌표
+        label_positions[txt] = (x + w_box//2, y + h_box//2)
+        seen.add(txt)
+        print(f"{txt}: 위치 = {label_positions[txt]}")
+
+
+# -------------- 전처리 이진화 -----------------
+
+binary_adapt = cv2.adaptiveThreshold(
+    resized_img,
+    maxValue=255,
+    adaptiveMethod=cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+    thresholdType=cv2.THRESH_BINARY,
+    blockSize=21,   # 15×15 픽셀 블록 단위
+    C=2              # 평균–2 만큼 이동
+)
+
+cv2.imwrite("binary_adaptive.png", binary_adapt)
+
+laplacian = cv2.Laplacian(binary_adapt, cv2.CV_8U, ksize=3)
+_, edge_mask = cv2.threshold(laplacian, 25, 255, cv2.THRESH_BINARY)
+
+cv2.imwrite("edge_mask.png", edge_mask)
+
+num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(edge_mask, connectivity=8)
+
+# 2) 새 마스크 생성
+mask = np.zeros_like(resized_img)
+
+# 3) 최소 기준 정의
+MIN_AREA     = 100    # 너무 작은 덩어리 제거
+MIN_RATIO    = 3.0    # 긴 직선: w/h 또는 h/w가 이 이상
+MIN_LENGTH   = 10     # 최소 길이(px) – w 또는 h가 이 이상
+
+for lbl in range(1, num_labels):
+    x, y, w, h, area = stats[lbl]
+    if area < MIN_AREA:
+        continue
+    # 긴 직선 비율
+    ratio = max(w/h if h>0 else 0, h/w if w>0 else 0)
+    if ratio < MIN_RATIO:
+        continue
+    if max(w, h) < MIN_LENGTH:
+        continue
+    # 조건 통과 시 그 부분만 살리기
+    mask[labels == lbl] = 255
+
+cv2.imwrite("cc_filtered.png", mask)
+
+# -------------- 직선 찾기 시작
+lines_p = cv2.HoughLinesP(mask, rho=1, theta=np.pi/180, threshold=50,
+                          minLineLength=MIN_LENGTH, maxLineGap=5)
+segments = []
+if lines_p is not None:
+    for l in lines_p:
+        x1,y1,x2,y2 = l[0]
+        segments.append(((x1,y1),(x2,y2)))
+# --- Hough 결과 시각화 ---
+hough_img = cv2.cvtColor(resized_img, cv2.COLOR_GRAY2BGR)
+for (x1,y1),(x2,y2) in segments:
+    cv2.line(hough_img, (x1,y1), (x2,y2), (0,255,0), 1)
+cv2.imwrite("hough_lines.png", hough_img)
+
+
+chosen_segments = {} #for 시각화
+actual_colors = {}
+for label, (px, py) in label_positions.items():
+    # 선분과 라벨 거리 계산
+    segs = []
+    for seg in segments:
+        (x1,y1),(x2,y2) = seg
+        d1 = np.hypot(px-x1, py-y1)
+        d2 = np.hypot(px-x2, py-y2)
+        if d1 < d2:
+            near, far = (x1,y1),(x2,y2)
+            dist = d1
+        else:
+            near, far = (x2,y2),(x1,y1)
+            dist = d2
+        segs.append((dist, near, far, seg))
+    # 거리순 정렬
+    segs.sort(key=lambda x: x[0])
+    found = False
+    for dist, near, far, seg in segs:
+        fx, fy = far
+        # 반대 끝점 주변 3x3에 외곽 마스크 존재 확인
+        ok = False
+        for dx in (-1,0,1):
+            for dy in (-1,0,1):
+                nx, ny = fx+dx, fy+dy
+                if 0 <= nx < external_mask.shape[1] and 0 <= ny < external_mask.shape[0]:
+                    if external_mask[ny,nx] != 0:
+                        ok = True
+                        break
+            if ok: break
+        if not ok:
+            continue
+        # 기울기 계산 및 유사 기울기 병합
+        x1,y1 = near; x2,y2 = far
+        slope1 = np.inf if x2==x1 else (y2-y1)/(x2-x1)
+        max_far = far
+        for seg2 in segments:
+            (u1,v1),(u2,v2) = seg2
+            slope2 = np.inf if u2==u1 else (v2-v1)/(u2-u1)
+            if abs(slope2 - slope1) < 0.01:
+                # 더 먼 끝점 선택
+                d_21 = np.hypot(u1-x1, v1-y1)
+                d_22 = np.hypot(u2-x1, v2-y1)
+                cand = (u1,v1) if d_21>d_22 else (u2,v2)
+                if np.hypot(cand[0]-x1, cand[1]-y1) > np.hypot(max_far[0]-x1, max_far[1]-y1):
+                    max_far = cand
+        fx, fy = max_far
+        # 최종 외곽 내부 확인 (반대쪽 끝점 주변 3×3 영역 확인)
+        ok2 = False
+        for dx2 in (-1, 0, 1):
+            for dy2 in (-1, 0, 1):
+                nx2, ny2 = fx + dx2, fy + dy2
+                if 0 <= nx2 < external_mask.shape[1] and 0 <= ny2 < external_mask.shape[0]:
+                    if external_mask[ny2, nx2] != 0:
+                        ok2 = True
+                        break
+            if ok2:
+                break
+        if not ok2:
+            # 주변 어느 곳에도 외곽 내부가 없으면 다음 선분으로
+            continue
+        # 색상 추출 (BGR)
+        chosen_segments[label] = seg
+        b, g, r = blurred_color_image[fy, fx]
+        actual_colors[label] = (int(r), int(g), int(b))
+        found = True
+        break
+    if not found:
+        chosen_segments[label] = None
+        actual_colors[label] = (0, 0, 0)
+# === 라벨별 최종 선분 시각화 ===
+for label, seg in chosen_segments.items():
+    vis = cv2.cvtColor(resized_img, cv2.COLOR_GRAY2BGR)
+    # 모든 Hough 선 회색으로
+    for (x1,y1),(x2,y2) in segments:
+        cv2.line(vis,(x1,y1),(x2,y2),(200,200,200),1)
+    if seg:
+        (x1,y1),(x2,y2) = seg
+        cv2.line(vis,(x1,y1),(x2,y2),(0,0,255),2)
+        cx,cy = label_positions[label]
+        cv2.circle(vis,(cx,cy),5,(255,0,0),-1)
+        cv2.putText(vis, label, (cx+5,cy-5), cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,0),1)
+    cv2.imwrite(f"label_{label}_segment.png", vis)
+    print(f"{label} segment 이미지 저장: label_{label}_segment.png")
+
+# === 매핑 파일 갱신 ===
+all_rows = []
+with open("label_color_mapping.csv", "r", newline="", encoding='utf-8') as f:
+    reader = csv.reader(f)
+    header = next(reader)
+    header += ["Actual_R","Actual_G","Actual_B"]
+    all_rows.append(header)
+    for row in reader:
+        lab = row[0]
+        if lab in actual_colors:
+            row += list(actual_colors[lab])
+        else:
+            row += ["","",""]
+        all_rows.append(row)
+
+with open("label_color_mapping.csv", "w", newline="", encoding='utf-8') as f:
+    writer = csv.writer(f)
+    writer.writerows(all_rows)
+
+print("라벨별 실제 색상 매핑이 완료되었습니다.")
