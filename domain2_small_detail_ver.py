@@ -6,7 +6,32 @@ import pytesseract              # Tesseract OCR: 이미지에서 텍스트 추�
 import re                       # 정규표현식: OCR 문자열에서 특정 라벨 패턴 추출
 import random                   # 무작위 색상 생성 (label별 색상 매핑)
 import csv                      # CSV 파일 저장용 (라벨-색상 대응표 저장)
-#아 여기 위에 라이브러리 모두 상업적 사용 가능
+import colorsys                # 색상 변환 (HSV -> RGB
+#라이브러리 모두 상업적 사용 가능
+
+# 구분 잘되는 랜덤 색상 생성 함수
+def generate_distinct_colors(n, sat_range=(0.4, 0.8), val_range=(0.6, 0.9)):
+    colors = set()
+    max_attempts = 1000  # 무한 루프 방지용
+
+    attempts = 0
+    i = 0
+    while len(colors) < n and attempts < max_attempts:
+        h = i / n
+        s = random.uniform(*sat_range)
+        v = random.uniform(*val_range)
+        r, g, b = colorsys.hsv_to_rgb(h, s, v)
+        rgb = (int(r * 255), int(g * 255), int(b * 255))
+
+        if rgb not in colors:
+            colors.add(rgb)
+            i += 1
+        else:
+            attempts += 1  # 중복이면 다시 시도 (i는 유지)
+
+    if len(colors) < n:
+        print(f"⚠️ 중복 회피 실패: {n}개 중 {len(colors)}개만 생성됨.")
+    return list(colors)
 
 # === 설정 ===
 label_mode = 1  # 0: 숫자, 1: XF-숫자, X-숫자, TS-숫자, 2: H숫자, 3: 문자형식
@@ -14,7 +39,7 @@ save_label_color_map = True
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 # === 이미지 불러오기 ===
-img_path = r"C:\Users\LG\Desktop\학교\SW프젝\bad_ex.jpg"
+img_path = r"C:\Users\LG\Desktop\학교\SW프젝\ex3.jpg"
 img_pil = Image.open(img_path).convert("L")
 img_gray = np.array(img_pil)
 
@@ -146,7 +171,7 @@ labels_full[external_mask == 255] = kmeans.labels_
 
 # === 색상 매핑
 color_image = np.full((h, w, 3), 255, dtype=np.uint8)
-colors = [tuple(random.randint(0, 255) for _ in range(3)) for _ in range(num_regions)]
+colors = generate_distinct_colors(num_regions)
 for i in range(num_regions):
     color_image[labels_full == i] = colors[i]
 
@@ -165,9 +190,16 @@ g_blur = cv2.medianBlur(g, 3)
 r_blur = cv2.medianBlur(r, 3)
 blurred_color_image = cv2.merge([b_blur, g_blur, r_blur])
 
+#윤곽선을 thinned로 투명도 80퍼센트로 그리기
+overlay = blurred_color_image.copy()
+overlay[edges == 255] = (0, 0, 0)
+alpha = 0.8
+blended = cv2.addWeighted(overlay, alpha, blurred_color_image, 1 - alpha, 0)
+
+
 # === 결과 저장
-cv2.imwrite("outer.png", edge_mask_closed)
-cv2.imwrite("before_color.png", quantized)
+cv2.imwrite("before_color.png", quantized) #랜덤 채색 이전, 윤곽선 거의 없애거나 흐릿하게 만들고 명암 등급화한 상태태
 cv2.imwrite("1result_color_segmented.png", blurred_color_image )
+cv2.imwrite("2final_overlay.png", blended)
 
 #--------------------------------명암에 따른 영역 분리 끝----------------------------------------------------
