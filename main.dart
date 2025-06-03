@@ -1,15 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-//import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart';
-import 'dart:io'; // File 클래스를 사용하기 위해 임포트
-import 'package:http/http.dart' as http;
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For ESC
 import 'dart:typed_data';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:io'; // File 클래스 사용
 import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // ESC 키 이벤트용
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:archive/archive.dart'; // ZIP 파일 처리
 
 void main() {
   runApp(const MyApp());
@@ -28,81 +26,60 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
 class MyHomePage extends StatelessWidget {
   const MyHomePage({super.key, required this.title});
   final String title;
 
   Future<void> _pickImage(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
-    if (kIsWeb) {
-      // 웹은 갤러리만 지원
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        if (kDebugMode) debugPrint("웹에서 선택한 사진 경로: ${image.path}");
-        Uint8List responseBytes = Uint8List(0);
-        try {
-          final bytes = await image.readAsBytes();
-          final request = http.MultipartRequest('POST', Uri.parse('http://192.168.219.101:5000/upload'));
-          request.files.add(http.MultipartFile.fromBytes('image', bytes, filename: image.name));
+    if (image == null) return;
 
-          final response = await request.send();
-          if (response.statusCode == 200) {
-            responseBytes = await response.stream.toBytes();
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ImagePreviewScreen(imageBytes: responseBytes)));
-          } 
-          else {
-            if (kDebugMode) debugPrint("서버 오류: ${response.statusCode}");
-          }
-        }
-        catch (e) {
-          if (kDebugMode) debugPrint("에러 발생: $e");
-          Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => const MyHomePage(title: 'ColorMyModel')), (Route<dynamic> route) => false);
-        }
-        finally {
-          if (kDebugMode) debugPrint("서버 통신 완료");
-        }
-
-        return;
-      }
-
-      showModalBottomSheet(
-        context: context,
-        builder: (BuildContext ctx) {
-          ListTile l1 = ListTile(
-            leading: const Icon(Icons.camera_alt),
-            title: const Text("카메라로 촬영"),
-            onTap: () async {
-              final XFile? photo = await picker.pickImage(source: ImageSource.camera);
-              Navigator.pop(ctx);
-              if (photo != null) {
-                // 사진 사용 처리
-                if (kDebugMode) debugPrint("촬영한 사진 경로: ${photo.path}");
-              }
-            }
-          );
-          ListTile l2 = ListTile(
-            leading: const Icon(Icons.photo_library),
-            title: const Text("갤러리에서 선택"),
-            onTap: () async {
-              final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-              Navigator.pop(ctx);
-              if (image != null) {
-                // 사진 사용 처리
-                if (kDebugMode) debugPrint("선택한 사진 경로: ${image.path}");
-              }
-            }
-          );
-          return SafeArea(child: Column(mainAxisSize: MainAxisSize.min, children: [l1, l2]));
-        }
+    try {
+      final bytes = await image.readAsBytes();
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('http://192.168.219.101:5000/upload'),
       );
+      request.files.add(
+        http.MultipartFile.fromBytes('image', bytes, filename: image.name),
+      );
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+
+        final grayscaleBytes = base64Decode(jsonData['grayscale']);
+        final invertedBytes = base64Decode(jsonData['inverted']);
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DualImagePreviewScreen(
+              grayscale: grayscaleBytes,
+              inverted: invertedBytes,
+            ),
+          ),
+        );
+      } else {
+        debugPrint('서버 오류: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint("전송 오류: $e");
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(backgroundColor: Theme.of(context).colorScheme.inversePrimary, title: Text(title)),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(title),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -112,14 +89,13 @@ class MyHomePage extends StatelessWidget {
               child: Text(
                 "This application can color your ship plamodel's blueprint for painting!",
                 textAlign: TextAlign.center,
-              )
+              ),
             ),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 FloatingActionButton(
                   onPressed: () {
-                    if (kDebugMode) debugPrint("Button 1 pressed");
                     _pickImage(context);
                   },
                   tooltip: "Upload your blueprint!",
@@ -128,19 +104,109 @@ class MyHomePage extends StatelessWidget {
                 const SizedBox(width: 20),
                 FloatingActionButton(
                   onPressed: () {
-                    if (kDebugMode) debugPrint("Button 2 pressed");
+                    // Help 버튼 기능 필요 시 추가
                   },
                   tooltip: "Help Me!",
                   child: const Icon(Icons.help),
-                )
-              ]
-            )
-          ]
-        )
-      )
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
+
+class DualImagePreviewScreen extends StatelessWidget {
+  final Uint8List grayscale;
+  final Uint8List inverted;
+
+  const DualImagePreviewScreen({
+    super.key,
+    required this.grayscale,
+    required this.inverted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Processed Images")),
+      body: SingleChildScrollView(
+        child: Center(
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+
+              // Grayscale 이미지 + 버튼
+              Column(
+                children: [
+                  const Text(
+                    "option 01",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Image.memory(
+                      grayscale,
+                      fit: BoxFit.contain,
+                      height: MediaQuery.of(context).size.height * 0.4,
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ImagePreviewScreen(imageBytes: grayscale),
+                        ),
+                      );
+                    },
+                    child: const Text("Select This!"),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 32),
+
+              // Inverted 이미지 + 버튼
+              Column(
+                children: [
+                  const Text(
+                    "option 02",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Image.memory(
+                      inverted,
+                      fit: BoxFit.contain,
+                      height: MediaQuery.of(context).size.height * 0.4,
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ImagePreviewScreen(imageBytes: inverted),
+                        ),
+                      );
+                    },
+                    child: const Text("Select This!"),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 
 class ImagePreviewScreen extends StatefulWidget {
   final Uint8List imageBytes;
@@ -289,4 +355,3 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     );
   }
 }
-
