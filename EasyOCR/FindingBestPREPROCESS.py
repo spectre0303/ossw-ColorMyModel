@@ -123,7 +123,7 @@ for i, routine in enumerate(Routines):
     print(f"Running Routine {i+1}...")
     
     # Load image
-    image = cv2.imread("Projects/Processed_Test_Img_12MP.jpg")
+    image = cv2.imread("Projects/ossw-ColorMyModel/EasyOCR/Panel_Close.JPG")
     
     # Process image
     processed_image = routine(image)
