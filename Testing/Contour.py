@@ -11,23 +11,57 @@ custom_config = r'--oem 1 --psm 6 -c tessedit_char_whitelist=0123456789H'
 
 # ==================Image Preprocessing Function==========================
 # This function will preprocess the image to make it suitable for OCR
-def preprocess_image(image):
-    # skew the image
-    if len(image.shape) == 3:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+def deskew(image):
+    # deskew the image
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)[1]
+    coords = np.column_stack(np.where(binary > 0))
+    if coords.shape[0] == 0:
+        return image  # No foreground, return original
+
+    rect = cv2.minAreaRect(coords)
+    angle = rect[-1]
+    if angle < -45:
+        angle = 90 + angle
     else:
-        gray = image
+        angle = angle
+
+    # Only correct if angle is significant
+    if abs(angle) < 0.5:
+        return image
+    
+    (h, w) = image.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+    rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+
+    return rotated
+
+def preprocess_image(image):
+    image = deskew(image)
+
+    # denoise the image
+    denoised = cv2.fastNlMeansDenoising(image, h=20)
+
+    # morphological operations to clean up the image
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 1))
+    cleaned = cv2.erode(denoised, kernel, iterations=1)
+    cleaned = cv2.dilate(cleaned, kernel, iterations=1)
+    cleaned = cv2.morphologyEx(cleaned, cv2.MORPH_CLOSE, kernel)
 
     # sharpen the image
     kernel = np.array([[0, -1, 0], 
                        [-1, 5, -1], 
                        [0, -1, 0]])
-    sharpened = cv2.filter2D(image, -1, kernel)
-    
+    sharpened = cv2.filter2D(cleaned, -1, kernel)
+
+    resized = cv2.resize(sharpened, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+
+    return resized
 
 
 def preprocess_and_segment(image_path):
-    img = cv2.imread(image_path)
+    img = preprocess_image(cv2.imread(image_path))
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # Inverted thresholding to catch both black-on-white and white-on-black
@@ -35,7 +69,7 @@ def preprocess_and_segment(image_path):
 
     # Find external contours (boxes around characters)
     contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    boxes = [cv2.boundingRect(c) for c in contours if cv2.contourArea(c) > 50]
+    boxes = [cv2.boundingRect(c) for c in contours if cv2.contourArea(c) > 25] 
     boxes = sorted(boxes, key=lambda b: (b[1], b[0]))  # sort top to bottom, left to right
 
     results = []
