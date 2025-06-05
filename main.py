@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify, send_file
+from region_segment_ver1 import segment_and_colorize_ver1
+from region_segment_ver2 import segment_and_colorize_ver2
 from flask_cors import CORS
 from PIL import Image, ImageOps
 import io
 import base64
-import zipfile
-import os
+import numpy as np
 
 app = Flask(__name__)
 CORS(app)  # 모든 도메인에 대해 CORS 허용
@@ -26,18 +27,17 @@ def upload_image():
         img = Image.open(file.stream)
 
         # 이미지 2개 생성
-        grayscale = img.convert("L")
-        inverted = ImageOps.invert(img.convert("RGB"))
+        result1 = segment_and_colorize_ver1(img)
+        result2 = segment_and_colorize_ver2(img)
 
-        # 각각을 Base64로 인코딩
         def image_to_base64(image_obj):
             img_io = io.BytesIO()
             image_obj.save(img_io, format='PNG')
             img_io.seek(0)
             return base64.b64encode(img_io.read()).decode('utf-8')
-
-        grayscale_b64 = image_to_base64(grayscale)
-        inverted_b64 = image_to_base64(inverted)
+        
+        grayscale_b64 = image_to_base64(result1)
+        inverted_b64 = image_to_base64(result2)
 
         print("이미지 2개 전송 준비 완료")
         return jsonify({
@@ -88,43 +88,37 @@ def color_point():
         return "Bad Request: Image file required", 400
 
     try:
-        img = Image.open(file.stream).convert("RGB")  # 항상 RGB로 변환하여 안정성 확보
+        img = Image.open(file.stream).convert("RGB")
+        img_np = np.array(img)
+        print("원본 이미지 shape:", img_np.shape)
 
+        clicked_color = img_np[y, x]  # y 먼저!
+        print(f"📍 클릭한 좌표의 실제 색: {clicked_color}")
 
-        # 선택 색상 기반 변환
-        gray = img.convert("L")
+        # 기준 색상과의 차이가 일정 이하인 픽셀만 선택
+        threshold = 40  # 색 차이 허용 범위
+        diff = np.linalg.norm(img_np - clicked_color, axis=2)
+        mask = diff < threshold
+
+        # 선택된 색상 값
         color_map = {
             'RED': (255, 0, 0),
             'GREEN': (0, 255, 0),
             'BLUE': (0, 0, 255),
             'PURPLE': (128, 0, 128),
         }
-        base_color = color_map.get(color.upper(), (255, 255, 255))
+        target_color = np.array(color_map.get(color.upper(), (255, 255, 255)))
 
-        r = gray.point(lambda p: p * base_color[0] / 255)
-        g = gray.point(lambda p: p * base_color[1] / 255)
-        b = gray.point(lambda p: p * base_color[2] / 255)
-        processed = Image.merge("RGB", (r, g, b))
+        # mask가 True인 부분만 색 변경
+        result_np = img_np.copy()
+        result_np[mask] = target_color
 
-        print("color_point 처리: 선택 색상톤으로 컬러 변환")
-
-
-        # 디버깅용 점 추가
-        debug_img = processed.copy()
-        draw = ImageDraw.Draw(debug_img)
-        radius = 5
-        left_up = (x - radius, y - radius)
-        right_down = (x + radius, y + radius)
-        draw.ellipse([left_up, right_down], fill=(255, 255, 255))  # 하얀 점
-
-        # 디버깅 확인용: 디스플레이
-        ImageShow.show(debug_img)
-
+        result_img = Image.fromarray(result_np)
         img_io = io.BytesIO()
-        processed.save(img_io, 'PNG')
+        result_img.save(img_io, 'PNG')
         img_io.seek(0)
 
-        print("color_point 이미지(점 없이) 돌려드림")
+        print("✅ 색상 변경된 이미지 반환")
         return send_file(img_io, mimetype='image/png')
 
     except Exception as e:
