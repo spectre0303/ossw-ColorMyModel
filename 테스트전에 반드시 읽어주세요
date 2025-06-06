@@ -1,0 +1,7 @@
+example.jpg는
+your_project/
+├── assets/
+│   └── example.png   ✅ ← 이 파일이 실제 있어야 함
+
+
+반드시 이 위치에 있어야 합니다. 그러지 않을 경우 이미지를 불러오는데 실패합니다.
