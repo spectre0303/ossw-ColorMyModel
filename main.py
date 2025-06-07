@@ -6,6 +6,7 @@ from PIL import Image, ImageOps
 import io
 import base64
 import numpy as np
+from PreprocessAndOCR import run_ocr_on_image
 
 app = Flask(__name__)
 CORS(app)  # 모든 도메인에 대해 CORS 허용
@@ -51,6 +52,36 @@ def upload_image():
 
 from PIL import ImageDraw, ImageShow  # ImageDraw도 import 필요
 
+
+@app.route('/ocr', methods=['POST'])
+def ocr_image():
+    file = request.files.get('image')
+    if not file:
+        return "Bad Request: Image file required", 400
+
+    client_ip = request.remote_addr
+    count = click_counts.get(client_ip, 0) + 1
+    click_counts[client_ip] = count
+
+    try:
+        img = Image.open(file.stream).convert("RGB")
+        img_np = np.array(img)
+        print(f"[OCR 요청] 클라이언트 IP: {client_ip}, 이미지 shape: {img_np.shape}")
+
+        codes, texts = run_ocr_on_image(img_np)
+
+        print(f"클라이언트 {client_ip}의 현재 클릭 횟수: {count}")
+        print(f"인식된 코드들: {codes}")
+        print(f"인식된 텍스트들: {texts}")
+
+        return jsonify({
+            'codes': codes,
+            'texts': texts
+        })
+
+    except Exception as e:
+        print(f"error in OCR processing image: {e}")
+        return "image process failed", 500
 
 @app.route('/color_point', methods=['POST'])
 def color_point():
@@ -124,7 +155,7 @@ def color_point():
     except Exception as e:
         print(f"error in color_point processing image: {e}")
         return "image process failed", 500
-
+    
 if __name__ == '__main__':
     import json
     app.run(host='0.0.0.0', port=5000)

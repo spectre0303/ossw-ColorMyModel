@@ -7,6 +7,7 @@ import 'package:flutter/services.dart'; // ESC 키 이벤트용
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 // ZIP 파일 처리
+import 'dart:io'; // 파일 입출력
 
 void main() {
   runApp(const MyApp());
@@ -24,6 +25,21 @@ class MyApp extends StatelessWidget {
       ),
       home: const MyHomePage(title: 'ColorMyModel'),
     );
+  }
+}
+
+Future<List<String>> extractColorCodes(File imageFile) async {
+  var uri = Uri.parse('http://localhost:5000/ocr'); // Change if backend is remote
+  var request = http.MultipartRequest('POST', uri)
+    ..files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+  var response = await request.send();
+
+  if (response.statusCode == 200) {
+    var respStr = await response.stream.bytesToString();
+    var jsonResp = json.decode(respStr);
+    return List<String>.from(jsonResp['codes']);
+  } else {
+    throw Exception('Failed to extract codes');
   }
 }
 
