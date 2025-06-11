@@ -21,17 +21,31 @@
 
 ## 💻 기술 스택
 
-- **프론트엔드 / 백엔드**: Flutter (iOS / Android 지원)
-- **이미지 처리**:
-  - `Pillow`, `OpenCV`, `NumPy` (색칠 및 전처리)
-- **텍스트 인식**:
-  - `Tesseract OCR` (일본어, 중국어, 영어 지원)
-- **자동 번역**:
-  - `googletrans` (언어 통합)
-- **협업 도구**:
-  - `GitHub`, `Notion`
-- **데이터베이스**:
-  - ❗현재 문서에 명시되지 않음 (필요시 추가)
+### 🛠️ 백엔드
+
+| 구분 | 라이브러리 | 설명 |
+|------|------------|------|
+| 이미지 처리 & 색칠 | [<img src="https://img.shields.io/badge/Pillow-cc0066?style=for-the-badge&logo=python&logoColor=white">](https://python-pillow.org) [<img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white">](https://opencv.org) [<img src="https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white">](https://numpy.org) | 도안 채색 영역 분할 및 이미지 전처리 |
+| 텍스트 인식 | [<img src="https://img.shields.io/badge/Tesseract OCR-3549C1?style=for-the-badge&logo=tesseract&logoColor=white">](https://github.com/tesseract-ocr/tesseract) | 색상 코드 인식 (일본어/중국어/영어) |
+| 번역 | [<img src="https://img.shields.io/badge/googletrans-34A853?style=for-the-badge&logo=google&logoColor=white">](https://py-googletrans.readthedocs.io/en/latest/) | 다국어 색상명 자동 번역 처리 |
+
+---
+
+### 🎨 프론트엔드
+
+| 구분 | 라이브러리 | 설명 |
+|------|------------|------|
+| 앱 구현 | [<img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white">](https://flutter.dev) | iOS 및 Android 모두 지원하는 앱 개발 |
+
+---
+
+### 🤝 협업 도구
+
+| 도구 | 설명 |
+|------|------|
+| [<img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white">](https://github.com) | 소스 코드 버전 관리 |
+| [<img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white">](https://www.notion.so/) | 팀 문서 및 진행 관리 |
+
 
 ---
 
