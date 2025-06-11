@@ -142,7 +142,43 @@
 - 사용자 맞춤 색상 설정
 - AI 기반 색상 추천
 - 도료 브랜드 간 호환 색상 추천 시스템
+##  💻 프로젝트 설치 방법
 
+```bash
+# 1. 저장소 클론
+git clone https://github.com/spectre0303/ossw-ColorMyModel.git
+cd ossw-ColorMyModel
+
+# 2. 가상 환경 구성 (선택 사항)
+python -m venv venv
+source venv/bin/activate  # Windows는 venv\Scripts\activate
+
+# 3. 패키지 설치
+pip install -r requirements.txt
+
+# 4. 실행
+python main.py
+```
+
+Flutter 앱은 `flutter run` 또는 Android Studio에서 실행 가능합니다.
+
+---
+
+## 📱 프로젝트 사용법
+
+### 앱 사용 흐름
+
+1. 프라모델 도안 이미지 업로드
+2. 품질 체크 (흐림/어두움 등 자동 판별)
+3. OCR로 색상 코드 자동 인식
+4. 윤곽선 기반 영역 분리
+5. 자동 채색 또는 수동 색상 선택
+6. 결과 이미지 다운로드
+
+> 📌 **추가 정보**  
+> - 수동 채색 시, 색상 스포이트 도구로 영역 클릭 가능  
+> - Ver1/Ver2 분할 방식 중 선택 가능  
+> - 출력 파일은 `/output/` 경로에 저장
   
 ## ✅ 팀원별 진행 상황 정리
 
