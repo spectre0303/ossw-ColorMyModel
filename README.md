@@ -204,6 +204,34 @@ Flutter 앱은 `flutter run` 또는 Android Studio에서 실행 가능합니다.
 | **7. 문서화 및 발표 자료 준비** | - 노션(Notion) 문서 초안 일부 작성, 주요 기능 설명·스크린샷 누락<br>- 슬라이드 초안 작성 중, 구조 정리만 완료 | - **노션 문서화 완료**:<br>  • 기능별 워크플로우(스크린샷·코드 스니펫 포함)<br>  • 예외 케이스(어두움/흐림/명암 문제)<br>  • 전처리 단계별 이미지 예시(Adaptive Threshold, Morphology 등)<br>  • Ver1 vs Ver2 비교 예시 스크린샷<br>  • GitHub PR 링크 첨부<br>- **슬라이드 업데이트 완료**:<br>  • Before/After 스크린샷 반영<br>  • 기능별 설명 보강<br>  • Next Action 부분 추가 |
 ---
 
+## 📎 참고 링크 및 가이드
+
+### 🐛 Issue & 기능 제안
+ColorMyModel에서 발생한 문제나 개선 사항, 새 기능 아이디어가 있다면 언제든지 이슈를 등록해주세요.  
+- [Issue 등록하기](https://github.com/spectre0303/ossw-ColorMyModel/issues)
+- [기능 제안 템플릿](https://github.com/spectre0303/ossw-ColorMyModel/issues/new?template=feature_request.md)
+
+### 📥 Pull Request
+기여하고 싶으신가요? 환영합니다! 아래 절차에 따라 PR을 보내주세요.
+1. 저장소 Fork
+2. 새로운 브랜치 생성
+3. 기능 개발 후 커밋
+4. [Pull Request 작성](https://github.com/spectre0303/ossw-ColorMyModel/pulls)
+
+> 📌 PR 전에는 반드시 [CONTRIBUTING.md](./CONTRIBUTING.md) 문서를 읽어주세요.
+
+### 📚 위키 (Wiki)
+- ColorMyModel 프로젝트 구조, 기술 설명 등은 [Wiki 페이지](https://github.com/spectre0303/ossw-ColorMyModel/wiki)에서 확인 가능합니다.
+- 주요 내용:
+  - 프로젝트 소개 및 사용 가이드
+  - 이미지 처리 흐름
+  - OCR/채색 알고리즘
+  - UI 구성 및 전처리 시각 자료
+
+
+### 🙌 기여 가이드
+ColorMyModel은 누구나 기여할 수 있습니다. 자세한 기여 방법은 [CONTRIBUTING.md](./CONTRIBUTING.md)를 참고해주세요.
+
 ## 🧾 라이선스
 
 Copyright (c) 2025 GDB Team
