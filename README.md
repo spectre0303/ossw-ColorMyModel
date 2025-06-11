@@ -146,9 +146,7 @@
 
 ```bash
 # 1. 저장소 클론
-git clone https://github.com/spectre0303/ossw-ColorMyModel.git
-cd ossw-ColorMyModel
-
+https://github.com/spectre0303/ossw-ColorMyModel.git
 # 2. 가상 환경 구성 (선택 사항)
 python -m venv venv
 source venv/bin/activate  # Windows는 venv\Scripts\activate
