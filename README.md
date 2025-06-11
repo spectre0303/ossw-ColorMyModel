@@ -206,4 +206,6 @@ Flutter 앱은 `flutter run` 또는 Android Studio에서 실행 가능합니다.
 
 ## 🧾 라이선스
 
+Copyright (c) 2025 GDB Team
+
 이 프로젝트는 MIT 라이선스를 따릅니다. 자세한 내용은 [LICENSE](./LICENSE)를 참고하세요.
