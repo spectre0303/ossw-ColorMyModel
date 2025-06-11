@@ -181,8 +181,9 @@ Flutter 앱은 `flutter run` 또는 Android Studio에서 실행 가능합니다.
   
 ## 📚 회의록 모음 및 진행 상황
 
-회의 내용과 주간별 진행 상황은 [GitHub Wiki](https://github.com/사용자명/레포명/wiki)에서 확인할 수 있습니다.  
-👉 [회의록 모음 및 진행 상황 바로가기](https://github.com/사용자명/레포명/wiki/회의록-모음-및-진행-상황)
+프로젝트의 주간 회의록 및 기능별 개발 진행 상황은 GitHub Wiki에 정리되어 있습니다.  
+👉 [회의록 모음 및 진행 상황 바로가기](https://github.com/spectre0303/ossw-ColorMyModel/wiki)
+
 
 ## ✅ 팀원별 진행 상황 정리
 
