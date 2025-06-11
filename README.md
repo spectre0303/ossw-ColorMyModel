@@ -2,6 +2,11 @@
 
 **팀명: GDB**  
 **프로젝트명: ColorMyModel**
+<p align="center">
+  <img src="https://github.com/spectre0303/ossw-ColorMyModel/blob/main/ColorMyModel_Logo.png?raw=true" alt="ColorMyModel Logo" width="250"/>
+</p>
+
+<p align="center">🖌️ 흑백 도안을 자동 채색하는 프라모델 도색 가이드 앱</p>
 
 프라모델 흑백 도안을 업로드하면,  
 👉 색상 코드 추출 → 👉 윤곽선/명암 기반 영역 분리 → 👉 자동 채색 → 👉 결과 이미지 출력까지!  
