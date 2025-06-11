@@ -28,6 +28,7 @@
 
 [버그 제보하기](https://github.com/spectre0303/ossw-ColorMyModel/issues/new?template=bug_report.md)
 
+
 ---
 
 ### 🌱 기능 제안
@@ -38,7 +39,9 @@
 - 필요성 또는 기대 효과
 - 참고 자료 또는 예시 (선택)
 
-[기능 제안하기](https://github.com/spectre0303/ossw-ColorMyModel/issues/new?template=feature_request.md)
+  
+[기능 제안하기](https://github.com/spectre0303/ossw-ColorMyModel/pulls)
+
 
 ---
 
