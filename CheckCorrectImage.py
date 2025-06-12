@@ -1,80 +1,68 @@
 import cv2
-import numpy as np
 
 def isfocused(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    return laplacian_var > 100  # Adjust threshold as needed
+    return laplacian_var > 100
 
 def isblurry(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    return laplacian_var < 100  # Adjust threshold as needed
+    return laplacian_var < 100
 
 def isdark(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     mean_intensity = gray.mean()
-    return mean_intensity < 50  # Adjust threshold as needed
+    return mean_intensity < 50
 
 def isbright(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     mean_intensity = gray.mean()
-    return mean_intensity > 200  # Adjust threshold as needed
+    return mean_intensity > 200
 
 def islowcontrast(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     min_val, max_val = gray.min(), gray.max()
-    return (max_val - min_val) < 50  # Adjust threshold as needed
+    return (max_val - min_val) < 50
 
-# Real-time video capture
-cap = cv2.VideoCapture(1)  # Use 1 for the external camera (adjust index if necessary)
-# Automatically detect the camera index
-# for i in range(2, 10000):  # Try indices from 0 to 9
-#     test_cap = cv2.VideoCapture(i)
-#     if test_cap.isOpened():
-#         print(f"Camera found at index {i}")
-#         cap = cv2.VideoCapture(i)
-#         test_cap.release()
-#         break
-# else:
-#     print("No camera found. Exiting...")
-#     exit()
+def isSmall(frame):
+    height, width = frame.shape[:2]
+    if width >= height:
+        return (width < 1000 or height < 500)
+    else:
+        return (width < 500 or height < 1000)
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        break
+def analyze_image_quality(frame):
+    """
+    이미지의 품질을 분석하고 문제점 설명 리스트 또는 None 반환
 
-    # Check conditions
+    Returns:
+        None if image is only focused and no issues,
+        list of strings describing issues otherwise.
+    """
+    results = []
+
     focused = isfocused(frame)
     blurry = isblurry(frame)
     dark = isdark(frame)
     bright = isbright(frame)
     low_contrast = islowcontrast(frame)
+    small = isSmall(frame)
 
-    # Display results on the frame
-    text = []
-    if focused:
-        text.append("Focused")
+    # 조건들에 따라 메시지 저장
     if blurry:
-        text.append("Blurry")
+        results.append("이미지가 흐립니다.")
     if dark:
-        text.append("Dark")
+        results.append("이미지가 너무 어둡습니다.")
     if bright:
-        text.append("Bright")
+        results.append("이미지가 너무 밝습니다.")
     if low_contrast:
-        text.append("Low Contrast")
+        results.append("대비가 너무 낮습니다.")
+    if small:
+        results.append("이미지 해상도가 너무 낮습니다.")
 
-    for i, t in enumerate(text):
-        cv2.putText(frame, t, (10, 30 + i * 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+    # 만약 다른 건 다 false고 focused만 true면 → None 반환
+    if focused and not results:
+        return None
 
-    # Show the frame
-    cv2.imshow("Real-Time Image Quality Check", frame)
-
-    # Exit on pressing 'q'
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-# Release resources
-cap.release()
-cv2.destroyAllWindows()
+    return results
