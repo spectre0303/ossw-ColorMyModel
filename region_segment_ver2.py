@@ -43,8 +43,6 @@ def segment_and_colorize_ver2(pil_image: Image.Image, num_regions: int = 5) -> I
     else:
         resized_img = img_gray
 
-    num_regions = 5  # 분할할 영역 수 기본 5!!!!!!!!!!!!!!!!!!!!!!!!1
-
     # === 윤곽선 추출 및 원본 회색값으로 선 채색
     blurred = cv2.GaussianBlur(resized_img, (3, 3), 0)
     edges = cv2.Canny(blurred, 50, 150)
