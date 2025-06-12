@@ -69,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage> {
         http.MultipartFile.fromBytes('image', bytes, filename: image.name),
       );
 
-      request.fields['mode'] = selectedMode!;
+      //request.fields['mode'] = selectedMode!;
 
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
@@ -79,6 +79,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
         final grayscaleBytes = base64Decode(jsonData['grayscale']);
         final invertedBytes = base64Decode(jsonData['inverted']);
+        final colorCodes = (jsonData['codes'] as List<dynamic>).cast<String>();
+        //final colorTexts = jsonData['texts'];
 
         Navigator.push(
           context,
@@ -86,6 +88,8 @@ class _MyHomePageState extends State<MyHomePage> {
             builder: (_) => DualImagePreviewScreen(
               grayscale: grayscaleBytes,
               inverted: invertedBytes,
+              colorCode: colorCodes,
+              mode: selectedMode,
             ),
           ),
         );
@@ -212,11 +216,15 @@ class HelpPage extends StatelessWidget {
 class DualImagePreviewScreen extends StatelessWidget {
   final Uint8List grayscale;
   final Uint8List inverted;
+  final List<String> colorCode;
+  final String? mode;
 
   const DualImagePreviewScreen({
     super.key,
     required this.grayscale,
     required this.inverted,
+    required this.colorCode,
+    required this.mode
   });
 
   @override
@@ -249,7 +257,7 @@ class DualImagePreviewScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ImagePreviewScreen(imageBytes: grayscale),
+                          builder: (_) => ImagePreviewScreen(imageBytes: grayscale, colorCode: colorCode, mode: mode,),
                         ),
                       );
                     },
@@ -280,7 +288,7 @@ class DualImagePreviewScreen extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => ImagePreviewScreen(imageBytes: inverted),
+                          builder: (_) => ImagePreviewScreen(imageBytes: inverted, colorCode: colorCode, mode: mode,),
                         ),
                       );
                     },
@@ -300,8 +308,15 @@ class DualImagePreviewScreen extends StatelessWidget {
 
 class ImagePreviewScreen extends StatefulWidget {
   final Uint8List imageBytes;
+  final List<String> colorCode;
+  final String? mode;
 
-  const ImagePreviewScreen({super.key, required this.imageBytes});
+  const ImagePreviewScreen({
+    super.key, 
+    required this.imageBytes, 
+    required this.colorCode,
+    required this.mode
+  });
 
   @override
   State<ImagePreviewScreen> createState() => _ImagePreviewScreenState();
@@ -313,7 +328,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   bool isSelecting = true;
   final GlobalKey imageKey = GlobalKey();
 
-  final List<String> colors = [
+  List<String> colors = [
     'RED', 'GREEN', 'BLUE', 'YELLOW', 'ORANGE', 'PURPLE', 'PINK', 'BLACK', 'WHITE'
   ];
 
@@ -324,6 +339,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.mode != '4') colors = widget.colorCode;
     currentImageBytes = Uint8List.fromList(widget.imageBytes);
     filteredColors = List.from(colors);
   }
@@ -425,7 +441,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                             final bytes = await response.stream.toBytes();
                             setState(() {
                               currentImageBytes = bytes;
-                              selectedColor = null;
+                              //selectedColor = null;
                             });
                           } else {
                             debugPrint('서버 오류: ${response.statusCode}');
