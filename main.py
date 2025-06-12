@@ -7,6 +7,7 @@ import io
 import base64
 import numpy as np
 from PreprocessAndOCR import run_ocr_on_image
+from CheckCorrectImage import analyze_image_quality
 
 app = Flask(__name__)
 CORS(app)  # 모든 도메인에 대해 CORS 허용
@@ -29,6 +30,16 @@ def upload_image():
         img_ocr = Image.open(file.stream).convert("RGB")
         img_np = np.array(img_ocr)
         print(f"[OCR 요청] 클라이언트 IP: {client_ip}, 이미지 shape: {img_np.shape}")
+
+         # 🔍 이미지 품질 검사
+        quality_issues = analyze_image_quality(img_np)
+        if quality_issues is not None:
+            print(f"이미지 품질 문제 발견: {quality_issues}")
+            return jsonify({
+                'status': 'error',
+                'message': '이미지 품질 문제가 감지되었습니다.',
+                'issues': quality_issues
+            }), 400
 
         codes, texts = run_ocr_on_image(img_np)
         print(f"인식된 코드들: {codes}")
