@@ -29,10 +29,6 @@ def segment_and_colorize_ver2(pil_image: Image.Image, num_regions: int = 5) -> I
     img_pil = pil_image.convert("L")
     img_gray = np.array(img_pil)
     print("✅ img_gray.shape:", img_gray.shape)
-    # 이미지 해상도 체크
-    width, height = pil_image.size
-    if (width >= height and (width < 1000 or height < 500)) or (width < height and (width < 500 or height < 1000)):
-        raise ValueError("이미지 해상도가 너무 낮습니다.")
 
     # 크기 조정
     h, w = img_gray.shape[:2]
