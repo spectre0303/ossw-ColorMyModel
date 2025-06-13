@@ -2,6 +2,7 @@ import 'dart:convert';
 // File 클래스 사용
 import 'dart:ui' as ui;
 
+import 'package:web/web.dart' as web;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // ESC 키 이벤트용
 import 'package:image_picker/image_picker.dart';
@@ -62,7 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final bytes = await image.readAsBytes();
       final request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://192.168.219.101:5000/upload'),
+        Uri.parse('http://172.30.1.32:5000/upload'),
       );
 
       request.files.add(
@@ -363,6 +364,18 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
     setState(() {});
   }
 
+  void picDownload(Uint8List image) {
+    // Encode our file in base64
+    final target = base64Encode(image);
+    // Create the link with the file
+    final anchor =
+        (web.document.createElement("a") as web.HTMLAnchorElement)
+          ..href = 'data:application/octet-stream;base64,$target'
+          ..download = "processedImage.png"
+          ..click();
+    anchor.remove();
+  }
+
   @override
   void dispose() {
     searchController.dispose();
@@ -430,7 +443,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
                         debugPrint('✅ 보정된 클릭 좌표: ($imageX, $imageY)');
 
-                        final uri = Uri.parse('http://192.168.219.101:5000/color_point');
+                        final uri = Uri.parse('http://172.30.1.32:5000/color_point');
                         final request = http.MultipartRequest('POST', uri);
                         request.fields['data'] = jsonEncode({'x': imageX, 'y': imageY, 'color': selectedColor});
                         request.files.add(http.MultipartFile.fromBytes('image', currentImageBytes, filename: 'image.png'));
@@ -528,7 +541,10 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
                         });
                       },
                     ),
-
+                    ElevatedButton(
+                    onPressed: () => picDownload(currentImageBytes),
+                    child: const Text("Download"),
+                  ),
                     if (!isSelecting)
                       const Padding(
                         padding: EdgeInsets.only(top: 16),

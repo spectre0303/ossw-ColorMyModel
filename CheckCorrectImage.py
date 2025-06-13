@@ -18,7 +18,7 @@ def isdark(frame):
 def isbright(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     mean_intensity = gray.mean()
-    return mean_intensity > 200
+    return mean_intensity > 300
 
 def islowcontrast(frame):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
