@@ -145,22 +145,37 @@
   
 ##  💻 프로젝트 설치 방법
 
-```bash
-# 1. 저장소 클론
-https://github.com/spectre0303/ossw-ColorMyModel.git
+1. 이 저장소를 클론합니다.
+   ```bash
+   git clone https://github.com/spectre0303/ossw-ColorMyModel.git
+   cd ossw-ColorMyModel
+   ```
 
-# 2. 가상 환경 구성 (선택 사항)
-python -m venv venv
-source venv/bin/activate  # Windows는 venv\Scripts\activate
+2. Flutter 의존성 설치
+   ```bash
+   flutter pub get
+   ```
 
-# 3. 패키지 설치
-pip install -r requirements.txt
+3. 백엔드 서버 실행  
+   `/backend` 디렉토리로 이동 후 필요한 패키지 설치 및 서버 실행
+   ```bash
+   pip install -r requirements.txt
+   python main.py
+   ```
 
-# 4. 실행
-python main.py
-```
+4. 프론트엔드 실행 (웹 기반)
 
-Flutter 앱은 `flutter run` 또는 Android Studio에서 실행 가능합니다.
+   - **웹 브라우저에서 실행할 경우** 다음 명령어를 사용하세요:
+     ```bash
+     flutter run -d chrome
+     ```
+
+   - `main.dart` 내 `Uri.parse()` 부분에는 **본인의 서버 주소**를 정확히 입력해야 합니다.  
+     예시:
+     ```dart
+     final url = Uri.parse('http://localhost:5000/upload');
+     ```
+     실제 배포 시에는 로컬 주소 대신 서버 IP 또는 도메인 주소로 교체해주세요.
 
 ---
 
