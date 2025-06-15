@@ -147,8 +147,7 @@
 
 1. 이 저장소를 클론합니다.
    ```bash
-   git clone https://github.com/spectre0303/ossw-ColorMyModel.git
-   cd ossw-ColorMyModel
+https://github.com/spectre0303/ossw-ColorMyModel.git
    ```
 
 2. Flutter 의존성 설치
