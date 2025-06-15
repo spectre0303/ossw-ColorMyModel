@@ -145,37 +145,66 @@
   
 ##  💻 프로젝트 설치 방법
 
-1. 이 저장소를 클론합니다.
-   ```bash
-   git clone https://github.com/spectre0303/ossw-ColorMyModel.git
-   cd ossw-ColorMyModel
-   ```
 
-2. Flutter 의존성 설치
-   ```bash
-   flutter pub get
-   ```
+본 프로젝트는 **백엔드 서버**와 **Flutter 웹 클라이언트**로 구성되어 있으며, 두 구성 요소 모두 실행되어야 전체 기능을 사용할 수 있습니다.
 
-3. 백엔드 서버 실행  
-   `/backend` 디렉토리로 이동 후 필요한 패키지 설치 및 서버 실행
-   ```bash
-   pip install -r requirements.txt
-   python main.py
-   ```
+---
 
-4. 프론트엔드 실행 (웹 기반)
+### 🖥️ 1. 서버 실행 방법 (Python)
 
-   - **웹 브라우저에서 실행할 경우** 다음 명령어를 사용하세요:
-     ```bash
-     flutter run -d chrome
-     ```
+#### ✅ 저장소 클론
+```bash
+git clone https://github.com/spectre0303/ossw-ColorMyModel.git
+cd ossw-ColorMyModel
+```
 
-   - `main.dart` 내 `Uri.parse()` 부분에는 **본인의 서버 주소**를 정확히 입력해야 합니다.  
-     예시:
-     ```dart
-     final url = Uri.parse('http://localhost:5000/upload');
-     ```
-     실제 배포 시에는 로컬 주소 대신 서버 IP 또는 도메인 주소로 교체해주세요.
+#### ✅ (선택) 가상환경 설정
+```bash
+python -m venv venv
+source venv/bin/activate  # Windows는 venv\Scripts\activate
+```
+
+#### ✅ 패키지 설치
+```bash
+pip install -r requirements.txt
+```
+
+#### ✅ 백엔드 서버 실행
+```bash
+python main.py
+```
+
+---
+
+### 🌐 2. 클라이언트 실행 방법 (Flutter Web)
+
+#### ✅ Flutter SDK 설치
+Flutter 설치 여부 확인:
+```bash
+flutter --version
+```
+설치되지 않았다면 [Flutter 설치 가이드](https://docs.flutter.dev/get-started/install)를 참고하세요.
+
+#### ✅ 프로젝트 디렉토리로 이동
+압축을 풀었거나 복사한 Flutter 프로젝트 폴더로 이동합니다.
+
+#### ✅ 의존성 설치
+```bash
+flutter pub get
+```
+
+#### ✅ main.dart 파일 위치 확인
+`lib/main.dart`가 있는지 확인합니다.
+
+#### ✅ 에뮬레이터 또는 디바이스 준비
+Chrome 브라우저를 기본 디바이스로 실행하거나, Android Studio/VS Code에서 실행할 수 있습니다.
+```bash
+flutter run -d chrome
+```
+
+> ⚠️ **중요:** 서버가 반드시 백그라운드에서 구동 중이어야 하며,  
+> `main.dart`의 `Uri.parse`에 지정된 주소는 서버와 동일한 IP로 수정해야 합니다.
+
 
 ---
 
