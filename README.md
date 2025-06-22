@@ -201,13 +201,22 @@ Chrome 브라우저를 기본 디바이스로 실행하거나, Android Studio/VS
 flutter run -d chrome
 ```
 
-> ⚠️ **중요:** 서버가 반드시 백그라운드에서 구동 중이어야 하며,  
-> `main.dart`의 `Uri.parse`에 지정된 주소는 서버와 동일한 IP로 수정해야 합니다.
+---
 
+### 🔗 main.dart의 서버 주소 설정 규칙
+
+`main.dart` 파일 내 `Uri.parse()`에 전달되는 주소는 **파이썬 서버 실행 시 생성되는 IP 주소**로 반드시 직접 수정해야 합니다.
+
+Flask 서버 실행 시 터미널에는 아래와 같이 주소가 표시됩니다:
+
+(로컬 네트워크용 주소, 예: `http://172.30.1.63:5000`)을 복사하여, `main.dart`의 `Uri.parse()` 코드에 넣어야 합니다.
+
+> 이 IP 주소는 **실행 환경마다 달라지므로**, 항상 서버를 실행한 후 해당 주소를 터미널에서 확인하여 입력해야 합니다.
 
 ---
 
 ## 📱 프로젝트 사용법
+[README_ColorMyModel 2.md](https://github.com/user-attachments/files/20852925/README_ColorMyModel.2.md)
 
 ### 앱 사용 흐름
 
