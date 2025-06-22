@@ -67,7 +67,6 @@
 |------|------------|------|
 |이미지 처리 & 색칠 | [<img src="https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white">](https://opencv.org) [<img src="https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white">](https://numpy.org) [<img src="https://img.shields.io/badge/Pillow-cc0066?style=for-the-badge&logo=python&logoColor=white">](https://python-pillow.org) [<img src="https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white">](https://scikit-learn.org/stable/modules/clustering.html) [<img src="https://img.shields.io/badge/colorsys-FFD700?style=for-the-badge&logo=python&logoColor=white">](https://docs.python.org/3/library/colorsys.html) [<img src="https://img.shields.io/badge/random-777777?style=for-the-badge&logo=python&logoColor=white">](https://docs.python.org/3/library/random.html) | 도안 채색 영역 분할 및 자동 색상 부여 |
 | 텍스트 인식 | [<img src="https://img.shields.io/badge/easyOCR-FFD43B?style=for-the-badge&logo=python&logoColor=black">](https://github.com/JaidedAI/EasyOCR) | 다양한 언어 인식, 정규식 + 전처리로 색상 코드 정확도 향상 |
-| 번역 | [<img src="https://img.shields.io/badge/googletrans-34A853?style=for-the-badge&logo=google&logoColor=white">](https://py-googletrans.readthedocs.io/en/latest/) | 다국어 색상명 자동 번역 처리 |
 
 ---
 
