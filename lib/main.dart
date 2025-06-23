@@ -1,12 +1,10 @@
 import 'dart:convert';
-// File 클래스 사용
 import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // ESC 키 이벤트용
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
-// ZIP 파일 처리
+import 'services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -46,11 +44,6 @@ class _MyHomePageState extends State<MyHomePage> {
   String? selectedMode;
 
   Future<void> _pickImage(BuildContext context) async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-    if (image == null) return;
-
     if (selectedMode == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("모드를 선택해주세요.")),
@@ -59,41 +52,45 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image == null) return;
+
+      await UIHelper.showLoadingDialog(context);
+
       final bytes = await image.readAsBytes();
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('http://192.168.219.101:5000/upload'),
-      );
+      final response = await NetworkService.uploadImage(image.name, bytes, selectedMode!);
 
-      request.files.add(
-        http.MultipartFile.fromBytes('image', bytes, filename: image.name),
-      );
+      // Hide loading dialog
+      Navigator.pop(context);
 
-      request.fields['mode'] = selectedMode!;
+      if (!mounted) return;
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final grayscaleBytes = base64Decode(response['grayscale']);
+      final invertedBytes = base64Decode(response['inverted']);
 
-      if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
-
-        final grayscaleBytes = base64Decode(jsonData['grayscale']);
-        final invertedBytes = base64Decode(jsonData['inverted']);
-
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DualImagePreviewScreen(
-              grayscale: grayscaleBytes,
-              inverted: invertedBytes,
-            ),
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DualImagePreviewScreen(
+            grayscale: grayscaleBytes,
+            inverted: invertedBytes,
           ),
-        );
-      } else {
-        debugPrint('서버 오류: ${response.statusCode}');
-      }
+        ),
+      );
     } catch (e) {
-      debugPrint("전송 오류: $e");
+      // Hide loading dialog if it's showing
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      if (!mounted) return;
+
+      UIHelper.showErrorDialog(
+        context,
+        '이미지 처리 중 오류가 발생했습니다: ${e.toString()}'
+      );
     }
   }
 
@@ -414,7 +411,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
                         debugPrint('✅ 보정된 클릭 좌표: ($imageX, $imageY)');
 
-                        final uri = Uri.parse('http://192.168.219.101:5000/color_point');
+                        final uri = Uri.parse('http://localhost:5000/color_point');
                         final request = http.MultipartRequest('POST', uri);
                         request.fields['data'] = jsonEncode({'x': imageX, 'y': imageY, 'color': selectedColor});
                         request.files.add(http.MultipartFile.fromBytes('image', currentImageBytes, filename: 'image.png'));
@@ -527,4 +524,31 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
       ),
     );
   }
+}
+
+// Add error handling utilities
+void showErrorDialog(BuildContext context, String message) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Error'),
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('OK'),
+        ),
+      ],
+    ),
+  );
+}
+
+void showLoadingDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (context) => const Center(
+      child: CircularProgressIndicator(),
+    ),
+  );
 }

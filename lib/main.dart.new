@@ -1,0 +1,158 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'services.dart';
+import 'config.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'ColorMyModel',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.redAccent),
+      ),
+      home: const MyHomePage(title: 'ColorMyModel'),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key, required this.title});
+  final String title;
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final Map<String, String> modeMap = {
+    '1': '1. 숫자 + 표',
+    '2': '2. 타미야 도료 (XF-??) 기준',
+    '3': '3. 군제 (현 미스터하비 도료) 기준',
+    '4': '4. 색상 단어',
+  };
+
+  String? selectedMode;
+
+  Future<void> _pickImage(BuildContext context) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+    if (image == null) return;
+
+    if (selectedMode == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("모드를 선택해주세요.")),
+      );
+      return;
+    }
+
+    try {
+      UIHelper.showLoadingDialog(context);
+      
+      final bytes = await image.readAsBytes();
+      final response = await NetworkService.uploadImage(
+        image.name,
+        bytes,
+        selectedMode!,
+      );
+      
+      // Hide loading dialog
+      Navigator.pop(context);
+
+      if (response != null) {
+        final grayscaleBytes = base64Decode(response['grayscale']);
+        final invertedBytes = base64Decode(response['inverted']);
+
+        if (!context.mounted) return;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DualImagePreviewScreen(
+              grayscale: grayscaleBytes,
+              inverted: invertedBytes,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      // Hide loading dialog if still showing
+      if (context.mounted) {
+        Navigator.pop(context);
+        UIHelper.showErrorDialog(context, "Image upload failed: $e");
+      }
+      debugPrint("전송 오류: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(bottom: 24.0),
+                child: Text(
+                  "This application can color your ship plamodel's blueprint for painting!",
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              DropdownButtonFormField<String>(
+                decoration: const InputDecoration(
+                  labelText: "Select a Mode",
+                  border: OutlineInputBorder(),
+                ),
+                value: selectedMode,
+                items: modeMap.entries
+                    .map((entry) => DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        ))
+                    .toList(),
+                onChanged: (val) => setState(() => selectedMode = val),
+              ),
+              const SizedBox(height: 30),
+              FloatingActionButton.extended(
+                onPressed: () => _pickImage(context),
+                icon: const Icon(Icons.photo_album),
+                label: const Text("Upload your blueprint!"),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HelpPage()),
+                  );
+                },
+                icon: const Icon(Icons.help_outline),
+                label: const Text("Help me!"),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ...rest of the existing code for DualImagePreviewScreen and ImagePreviewScreen...

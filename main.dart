@@ -75,10 +75,9 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     try {
-      final bytes = await image.readAsBytes();
-      final request = http.MultipartRequest(
+      final bytes = await image.readAsBytes();      final request = http.MultipartRequest(
         'POST',
-        Uri.parse('http://192.168.219.101:5000/upload'),
+        Uri.parse('http://127.0.0.1:5000/upload'),
       );
 
       request.files.add(
@@ -430,7 +429,7 @@ class _ImagePreviewScreenState extends State<ImagePreviewScreen> {
 
                         debugPrint('✅ 보정된 클릭 좌표: ($imageX, $imageY)');
 
-                        final uri = Uri.parse('http://192.168.219.101:5000/color_point');
+                        final uri = Uri.parse('http://127.0.0.1:5000/color_point');
                         final request = http.MultipartRequest('POST', uri);
                         request.fields['data'] = jsonEncode({'x': imageX, 'y': imageY, 'color': selectedColor});
                         request.files.add(http.MultipartFile.fromBytes('image', currentImageBytes, filename: 'image.png'));

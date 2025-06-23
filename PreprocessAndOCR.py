@@ -28,18 +28,80 @@ def preprocess_image(image):
         return process_1(image)
 
 def extract_code(texts):
-    pattern = r'\b(H\d+|XF-\d+|X-\d+|TS-\d+)\b'
+    """Enhanced code extraction with improved pattern matching"""
+    patterns = [
+        r'\b(H\d+)',           # H followed by numbers
+        r'\b(XF-\d+)',         # XF- followed by numbers
+        r'\b(X-\d+)',          # X- followed by numbers
+        r'\b(TS-\d+)',         # TS- followed by numbers
+        r'\b(H[A-Z]\d+)',      # H followed by letter and numbers
+        r'\b(XF[A-Z]\d+)',     # XF followed by letter and numbers
+        r'\b(H[L]?-?\d{1,6})', # Handle variations like HL1162
+        r'\b([A-Z]\d{1,3})'    # Generic letter-number combinations
+    ]
+    
     codes = set()
     for t in texts:
-        found = re.findall(pattern, t)
-        codes.update(found)
-    return list(codes)
+        # Cleanup: remove spaces and normalize
+        t = re.sub(r'\s+', '', t.upper())
+        for pattern in patterns:
+            found = re.findall(pattern, t, re.IGNORECASE)
+            codes.update(found)
+    
+    return sorted(list(codes), key=lambda x: (x[0], int(re.search(r'\d+', x).group())))
+
+def enhanced_preprocess(image):
+    """Enhanced preprocessing pipeline combining multiple techniques"""
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Apply CLAHE for better contrast
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    clahe_img = clahe.apply(gray)
+    
+    # Denoise
+    denoised = cv2.fastNlMeansDenoising(clahe_img, h=10)
+    
+    # Sharpen
+    kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+    sharpened = cv2.filter2D(denoised, -1, kernel)
+    
+    # Final threshold with morphological operations
+    thresh = cv2.threshold(sharpened, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (2, 2))
+    morph = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    morph = cv2.morphologyEx(morph, cv2.MORPH_OPEN, kernel)
+    
+    return morph
 
 def run_ocr_on_image(img_np):
-    processed_img = preprocess_image(img_np)
-    reader = easyocr.Reader(['en'])
-    results = reader.readtext(processed_img, detail=1, paragraph=False)
-    texts = [text for (_, text, _) in results]
-    codes = extract_code(texts)
-    return codes, texts
-
+    """Enhanced OCR with better error handling and validation"""
+    try:
+        # Validate input
+        if img_np is None or not isinstance(img_np, np.ndarray):
+            raise ValueError("Invalid input image")
+            
+        # Check image dimensions
+        if len(img_np.shape) != 3:
+            raise ValueError("Image must be a 3-channel color image")
+            
+        # Process image
+        processed_img = enhanced_preprocess(img_np)
+        
+        # Initialize reader with confidence threshold
+        reader = easyocr.Reader(['en', 'ja'], gpu=True)  # Added Japanese support
+        results = reader.readtext(processed_img, 
+                                detail=1, 
+                                paragraph=False,
+                                min_size=10,
+                                contrast_ths=0.1,
+                                adjust_contrast=0.5,
+                                text_threshold=0.7)
+        
+        texts = [text for (_, text, conf) in results if conf > 0.5]  # Filter by confidence
+        codes = extract_code(texts)
+        
+        return codes, texts
+        
+    except Exception as e:
+        print(f"Error in OCR processing: {str(e)}")
+        return [], []
