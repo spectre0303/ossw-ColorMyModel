@@ -296,3 +296,10 @@ ColorMyModel은 누구나 기여할 수 있습니다. 자세한 기여 방법은
 Copyright (c) 2025 GDB Team
 
 이 프로젝트는 MIT 라이선스를 따릅니다. 자세한 내용은 [LICENSE](./LICENSE)를 참고하세요.
+
+## Contributors
+- bluecircle6437 (진민규)
+- bdmanee (바담수렌)
+- Sung0816 (성연지)
+- spectre0303 (전지민)
+- Hong-Iron (홍철민)
